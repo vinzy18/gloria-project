@@ -4,6 +4,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "../db/index";
 import { users, roles, rolePermissions, userRoles } from "../db/schema";
 import type { Permission } from "../shared/permissions";
+import { JWT_SECRET } from "../lib/env";
 
 // Role sengaja tidak disimpan di token; selalu dibaca dari DB tiap request
 export type JwtPayload = {
@@ -66,7 +67,7 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   const token = authHeader.slice(7);
   let payload: JwtPayload;
   try {
-    payload = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
+    payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
   } catch {
     return c.json({ error: "Token tidak valid atau sudah kadaluarsa" }, 401);
   }

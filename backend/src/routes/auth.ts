@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { db } from "../db/index";
 import { users } from "../db/schema";
+import { JWT_SECRET } from "../lib/env";
 import { authMiddleware, getPermissionsForRoles, getUserRoles } from "../middleware/auth";
 
 const router = new Hono();
@@ -45,7 +46,7 @@ router.post("/login", zValidator("json", loginSchema), async (c) => {
 
   const token = jwt.sign(
     { id: user.id, username: user.username },
-    process.env.JWT_SECRET,
+    JWT_SECRET,
     { expiresIn: "7d" }
   );
 
