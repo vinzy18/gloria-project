@@ -22,8 +22,9 @@ export default function AdminLogin() {
       toast.success("Login berhasil!");
       navigate("/admin");
     },
-    onError: () => {
-      toast.error("Username atau password salah");
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(msg ?? "Username atau password salah");
     },
   });
 

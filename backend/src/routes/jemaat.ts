@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { eq, ilike, like, or, sql } from "drizzle-orm";
+import { and, eq, ilike, like, ne, or, sql } from "drizzle-orm";
 import { db } from "../db/index";
 import { jemaat } from "../db/schema";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware, requirePermission } from "../middleware/auth";
 
 const router = new Hono();
 
@@ -13,9 +13,9 @@ router.use("*", authMiddleware);
 
 const jemaatSchema = z.object({
   idJemaat: z.string().nullish(),
-  nama: z.string().min(1, "Nama wajib diisi"),
-  nik: z.string().nullish(),
-  gender: z.enum(["Laki-laki", "Perempuan"]).nullish(),
+  nama: z.string().min(1, "Nama Lengkap wajib diisi"),
+  nik: z.string().regex(/^\d{16}$/, "NIK wajib diisi dan harus 16 digit angka"),
+  gender: z.enum(["Laki-laki", "Perempuan"], { errorMap: () => ({ message: "Jenis Kelamin wajib diisi" }) }),
   tempatLahir: z.string().nullish(),
   tanggalLahir: z.string().nullish(),
   alamat: z.string().nullish(),
@@ -27,15 +27,15 @@ const jemaatSchema = z.object({
   kolom: z.string().nullish(),
   pekerjaan: z.string().nullish(),
   keluarga: z.string().nullish(),
-  bipra: z.string().nullish(),
-  joinDate: z.string().nullish(),
+  bipra: z.string().min(1, "BIPRA wajib diisi"),
+  joinDate: z.string().min(1, "Tanggal Bergabung wajib diisi"),
   photoUrl: z.string().nullish(),
   isActive: z.boolean().optional(),
   notes: z.string().nullish(),
 });
 
 // GET /api/jemaat
-router.get("/", async (c) => {
+router.get("/", requirePermission("jemaat.view"), async (c) => {
   const { search, isActive, page = "1", limit = "20" } = c.req.query();
   const pageNum = parseInt(page);
   const limitNum = parseInt(limit);
@@ -50,6 +50,7 @@ router.get("/", async (c) => {
       or(
         ilike(jemaat.nama, `%${search}%`),
         ilike(jemaat.idJemaat, `%${search}%`),
+        ilike(jemaat.nik, `%${search}%`),
         ilike(jemaat.phone, `%${search}%`),
         ilike(jemaat.email, `%${search}%`)
       )
@@ -87,7 +88,7 @@ router.get("/", async (c) => {
 });
 
 // GET /api/jemaat/:id
-router.get("/:id", async (c) => {
+router.get("/:id", requirePermission("jemaat.view"), async (c) => {
   const id = parseInt(c.req.param("id"));
   const [jmt] = await db.select().from(jemaat).where(eq(jemaat.id, id)).limit(1);
   if (!jmt) return c.json({ error: "Anggota tidak ditemukan" }, 404);
@@ -95,8 +96,15 @@ router.get("/:id", async (c) => {
 });
 
 // POST /api/jemaat
-router.post("/", zValidator("json", jemaatSchema), async (c) => {
+router.post("/", requirePermission("jemaat.manage"), zValidator("json", jemaatSchema), async (c) => {
   const data = c.req.valid("json");
+
+  if (data.nik) {
+    const [existing] = await db.select().from(jemaat).where(eq(jemaat.nik, data.nik)).limit(1);
+    if (existing) {
+      return c.json({ error: `NIK ${data.nik} sudah terdaftar atas nama ${existing.nama}` }, 409);
+    }
+  }
 
   const baseDate = new Date();
   const yy = String(baseDate.getFullYear()).slice(-2);
@@ -114,6 +122,7 @@ router.post("/", zValidator("json", jemaatSchema), async (c) => {
   const [jmt] = await db.insert(jemaat).values({
     ...data,
     idJemaat,
+    nik: data.nik || undefined,
     email: data.email || undefined,
     updatedAt: new Date(),
   }).returning();
@@ -121,13 +130,24 @@ router.post("/", zValidator("json", jemaatSchema), async (c) => {
 });
 
 // PUT /api/jemaat/:id
-router.put("/:id", zValidator("json", jemaatSchema), async (c) => {
+router.put("/:id", requirePermission("jemaat.manage"), zValidator("json", jemaatSchema), async (c) => {
   const id = parseInt(c.req.param("id"));
   const data = c.req.valid("json");
 
+  if (data.nik) {
+    const [existing] = await db
+      .select()
+      .from(jemaat)
+      .where(and(eq(jemaat.nik, data.nik), ne(jemaat.id, id)))
+      .limit(1);
+    if (existing) {
+      return c.json({ error: `NIK ${data.nik} sudah terdaftar atas nama ${existing.nama}` }, 409);
+    }
+  }
+
   const [jmt] = await db
     .update(jemaat)
-    .set({ ...data, email: data.email || undefined, updatedAt: new Date() })
+    .set({ ...data, nik: data.nik || undefined, email: data.email || undefined, updatedAt: new Date() })
     .where(eq(jemaat.id, id))
     .returning();
 
@@ -136,7 +156,7 @@ router.put("/:id", zValidator("json", jemaatSchema), async (c) => {
 });
 
 // DELETE /api/jemaat/:id
-router.delete("/:id", async (c) => {
+router.delete("/:id", requirePermission("jemaat.manage"), async (c) => {
   const id = parseInt(c.req.param("id"));
   const [deleted] = await db.delete(jemaat).where(eq(jemaat.id, id)).returning();
   if (!deleted) return c.json({ error: "Data Jemaat tidak ditemukan" }, 404);

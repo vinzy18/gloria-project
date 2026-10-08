@@ -23,7 +23,6 @@ frontend/.cache/
 # Backend (Bun + Hono)
 # ===========================
 backend/dist/
-backend/drizzle/meta/*.json
 
 # ===========================
 # Logs

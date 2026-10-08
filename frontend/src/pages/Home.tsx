@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { newsApi, eventsApi, type News, type Event } from "../lib/api";
+import { wartaApi, eventsApi, type Warta, type Event } from "../lib/api";
 import { Calendar, Clock, MapPin, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -46,7 +46,7 @@ function HeroSection() {
   );
 }
 
-function NewsCard({ item }: { item: News }) {
+function WartaCard({ item }: { item: Warta }) {
   return (
     <div className="card">
       {item.coverImage && (
@@ -64,7 +64,7 @@ function NewsCard({ item }: { item: News }) {
         <h3 className="font-bold text-primary-800 text-lg mb-2 line-clamp-2">{item.title}</h3>
         <p className="text-gray-600 text-sm line-clamp-3 mb-4">{item.excerpt}</p>
         <Link
-          to={`/news/${item.slug}`}
+          to={`/warta/${item.slug}`}
           className="text-primary-700 font-semibold text-sm hover:text-primary-900 inline-flex items-center gap-1"
         >
           Baca selengkapnya <ChevronRight className="w-4 h-4" />
@@ -100,9 +100,9 @@ function EventCard({ item }: { item: Event }) {
 }
 
 export default function Home() {
-  const { data: newsData } = useQuery({
-    queryKey: ["news"],
-    queryFn: () => newsApi.list().then((r) => r.data),
+  const { data: wartaData } = useQuery({
+    queryKey: ["warta"],
+    queryFn: () => wartaApi.list().then((r) => r.data),
   });
 
   const { data: eventsData } = useQuery({
@@ -110,7 +110,7 @@ export default function Home() {
     queryFn: () => eventsApi.list().then((r) => r.data),
   });
 
-  const latestNews = newsData?.slice(0, 3) ?? [];
+  const latestWarta = wartaData?.slice(0, 3) ?? [];
   const upcomingEvents = eventsData?.slice(0, 4) ?? [];
 
   return (
@@ -143,22 +143,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Latest News */}
-      {latestNews.length > 0 && (
+      {/* Latest Warta */}
+      {latestWarta.length > 0 && (
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-end mb-8">
               <div>
-                <h2 className="section-title">Berita Terbaru</h2>
+                <h2 className="section-title">Warta Terbaru</h2>
                 <p className="text-gray-500">Info & warta jemaat terkini</p>
               </div>
-              <Link to="/news" className="btn-outline text-sm">
+              <Link to="/warta" className="btn-outline text-sm">
                 Lihat Semua
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {latestNews.map((item) => (
-                <NewsCard key={item.id} item={item} />
+              {latestWarta.map((item) => (
+                <WartaCard key={item.id} item={item} />
               ))}
             </div>
           </div>

@@ -3,9 +3,11 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import authRoutes from "./routes/auth";
 import jemaatRoutes from "./routes/jemaat";
-import newsRoutes from "./routes/news";
+import wartaRoutes from "./routes/warta";
 import eventsRoutes from "./routes/events";
 import organizationRoutes from "./routes/organization";
+import beritaAcaraRoutes from "./routes/beritaAcara";
+import rbacRoutes from "./routes/rbac";
 
 const app = new Hono();
 
@@ -23,9 +25,11 @@ app.use("*", logger());
 
 app.route("/api/auth", authRoutes);
 app.route("/api/jemaat", jemaatRoutes);
-app.route("/api/news", newsRoutes);
+app.route("/api/warta", wartaRoutes);
 app.route("/api/events", eventsRoutes);
-// app.route("/api/organization", organizationRoutes);
+app.route("/api/organization", organizationRoutes);
+app.route("/api/berita-acara", beritaAcaraRoutes);
+app.route("/api/rbac", rbacRoutes);
 
 app.get("/", (c) => c.json({ message: "Gereja Gloria API v1.0" }));
 

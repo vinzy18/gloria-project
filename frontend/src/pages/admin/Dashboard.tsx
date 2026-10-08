@@ -1,79 +1,33 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { jemaatApi, newsApi, eventsApi } from "../../lib/api";
-import { clearAuth, getUser } from "../../lib/auth";
-import { Users, Newspaper, Calendar, LogOut, UserCheck, UserX } from "lucide-react";
+import { jemaatApi, wartaApi, eventsApi } from "../../lib/api";
+import { Users, Newspaper, Calendar, UserCheck, UserX } from "lucide-react";
+import { getUser, hasPermission } from "../../lib/auth";
 import LogoGMIM from "../../components/LogoGMIM";
-
-function Sidebar() {
-  const navigate = useNavigate();
-  const user = getUser();
-
-  const handleLogout = () => {
-    clearAuth();
-    navigate("/admin/login");
-  };
-
-  return (
-    <aside className="w-64 bg-primary-800 text-white flex flex-col">
-      <div className="p-6 border-b border-primary-700">
-        <div className="flex items-center gap-2 font-bold text-lg">
-          <LogoGMIM width={24} height={24} />
-          Gereja Gloria
-        </div>
-        <p className="text-xs text-gray-400 mt-1">Panel Admin</p>
-      </div>
-
-      <nav className="flex-1 p-4 space-y-1">
-        <Link
-          to="/admin"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary-700 text-white text-sm font-medium"
-        >
-          <LogoGMIM width={16} height={16} /> Dashboard
-        </Link>
-        <Link
-          to="/admin/jemaat"
-          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-primary-700 text-gray-300 hover:text-white text-sm transition-colors"
-        >
-          <Users className="w-4 h-4" /> Data Jemaat
-        </Link>
-      </nav>
-
-      <div className="p-4 border-t border-primary-700">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-sm font-bold">
-            {user?.username?.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <p className="text-sm font-medium">{user?.username}</p>
-            <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-primary-700 rounded-lg transition-colors"
-        >
-          <LogOut className="w-4 h-4" /> Keluar
-        </button>
-      </div>
-    </aside>
-  );
-}
+import AdminSidebar from "../../components/AdminSidebar";
 
 export default function AdminDashboard() {
+  const canJemaat = hasPermission("jemaat.view");
+  const canWarta = hasPermission("warta.manage");
+  const canEvents = hasPermission("events.manage");
+
   const { data: membersData } = useQuery({
     queryKey: ["members", "dashboard"],
     queryFn: () => jemaatApi.list({ limit: 1000 }).then((r) => r.data),
+    enabled: canJemaat,
   });
-  const { data: newsData } = useQuery({
-    queryKey: ["news", "admin"],
-    queryFn: () => newsApi.adminList().then((r) => r.data),
+  const { data: wartaData } = useQuery({
+    queryKey: ["warta", "admin", "published-count"],
+    queryFn: () => wartaApi.adminList({ isPublish: "true", limit: 1 }).then((r) => r.data),
+    enabled: canWarta,
   });
   const { data: eventsData } = useQuery({
     queryKey: ["events", "admin"],
     queryFn: () => eventsApi.adminList().then((r) => r.data),
+    enabled: canEvents,
   });
 
+  const user = getUser();
   const activeMembers = membersData?.data.filter((m) => m.isActive).length ?? 0;
   const inactiveMembers = membersData?.data.filter((m) => !m.isActive).length ?? 0;
 
@@ -83,43 +37,49 @@ export default function AdminDashboard() {
       value: membersData?.pagination.total ?? "-",
       icon: <Users className="w-6 h-6" />,
       color: "bg-blue-500",
+      show: canJemaat,
     },
     {
       label: "Jemaat Aktif",
       value: activeMembers,
       icon: <UserCheck className="w-6 h-6" />,
       color: "bg-green-500",
+      show: canJemaat,
     },
     {
       label: "Jemaat Non-aktif",
       value: inactiveMembers,
       icon: <UserX className="w-6 h-6" />,
       color: "bg-gray-400",
+      show: canJemaat,
     },
     {
-      label: "Berita Diterbitkan",
-      value: newsData?.filter((n) => n.isPublished).length ?? "-",
+      label: "Warta Diterbitkan",
+      value: wartaData?.pagination.total ?? "-",
       icon: <Newspaper className="w-6 h-6" />,
       color: "bg-purple-500",
+      show: canWarta,
     },
     {
       label: "Kegiatan Aktif",
-      value: eventsData?.filter((e) => e.isActive).length ?? "-",
+      value: eventsData?.data.filter((e) => e.isActive).length ?? "-",
       icon: <Calendar className="w-6 h-6" />,
       color: "bg-gold-500",
+      show: canEvents,
     },
-  ];
+  ].filter((s) => s.show);
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      <Sidebar />
+      <AdminSidebar />
       <main className="flex-1 overflow-y-auto p-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-gray-500 text-sm">Selamat datang, ringkasan data gereja</p>
+          <p className="text-gray-500 text-sm">Selamat datang, <b>{user?.username}</b></p>
         </div>
 
-        {/* Stats */}
+        {/* Stats (sesuai hak akses) */}
+        {stats.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 mb-10">
           {stats.map((s) => (
             <div key={s.label} className="bg-white rounded-xl shadow-sm p-5">
@@ -131,11 +91,13 @@ export default function AdminDashboard() {
             </div>
           ))}
         </div>
+        )}
 
         {/* Quick actions */}
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Aksi Cepat</h2>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Fast Act</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {canJemaat && (
             <Link
               to="/admin/jemaat"
               className="flex items-center gap-4 p-4 rounded-lg border border-primary-100 hover:bg-primary-50 transition-colors"
@@ -148,8 +110,10 @@ export default function AdminDashboard() {
                 <p className="text-sm text-gray-500">Tambah, edit, atau hapus data anggota jemaat</p>
               </div>
             </Link>
+            )}
             <Link
               to="/"
+              target="_blank"
               className="flex items-center gap-4 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
             >
               <div className="bg-gray-100 p-3 rounded-lg">

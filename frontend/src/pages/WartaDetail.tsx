@@ -1,15 +1,16 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { newsApi } from "../lib/api";
+import { wartaApi } from "../lib/api";
 import { Calendar, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { renderContent } from "../lib/format";
 
-export default function NewsDetail() {
+export default function WartaDetail() {
   const { slug } = useParams<{ slug: string }>();
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["news", slug],
-    queryFn: () => newsApi.getBySlug(slug!).then((r) => r.data),
+    queryKey: ["warta", slug],
+    queryFn: () => wartaApi.getBySlug(slug!).then((r) => r.data),
     enabled: !!slug,
   });
 
@@ -24,9 +25,9 @@ export default function NewsDetail() {
   if (isError || !data) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-2xl font-bold text-gray-700 mb-4">Berita tidak ditemukan</h2>
-        <Link to="/news" className="btn-primary">
-          Kembali ke Daftar Berita
+        <h2 className="text-2xl font-bold text-gray-700 mb-4">Warta tidak ditemukan</h2>
+        <Link to="/warta" className="btn-primary">
+          Kembali ke Daftar Warta
         </Link>
       </div>
     );
@@ -34,9 +35,9 @@ export default function NewsDetail() {
 
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-      <Link to="/news" className="inline-flex items-center gap-2 text-primary-700 hover:text-primary-900 mb-6 font-medium">
+      <Link to="/warta" className="inline-flex items-center gap-2 text-primary-700 hover:text-primary-900 mb-6 font-medium">
         <ArrowLeft className="w-4 h-4" />
-        Kembali ke Berita
+        Kembali ke Warta
       </Link>
 
       {data.coverImage && (
@@ -60,9 +61,10 @@ export default function NewsDetail() {
         <p className="text-lg text-gray-600 border-l-4 border-gold-400 pl-4 mb-8 italic">{data.excerpt}</p>
       )}
 
-      <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-line">
-        {data.content}
-      </div>
+      <div
+        className="prose prose-lg max-w-none text-gray-700 leading-relaxed prose-headings:text-primary-800 prose-a:text-primary-700 prose-img:rounded-xl"
+        dangerouslySetInnerHTML={{ __html: renderContent(data.content) }}
+      />
     </article>
   );
 }

@@ -1,16 +1,21 @@
 import { db } from "./index";
-import { users, news, events, bpmj, jemaat, pelsus } from "./schema";
+import { users, roles, userRoles, warta, events, bpmj, jemaat, pelsus, masterPelayanan, bpmjPosition, pelsusPosition, masterPemasukanLain, masterPengeluaran } from "./schema";
 import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
 
 console.log("Seeding database...");
 
-// Create admin user
-const passwordHash = await bcrypt.hash("admin123", 10);
-await db.insert(users).values({
-  username: "admin",
-  passwordHash,
-  role: "admin",
-}).onConflictDoNothing();
+// Buat user default + assign role (role admin & bendahara dibuat oleh migration 0013_rbac)
+async function seedUser(username: string, password: string, roleName: string) {
+  await db.insert(users).values({ username, passwordHash: await bcrypt.hash(password, 10) }).onConflictDoNothing();
+  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.username, username));
+  const [role] = await db.select({ id: roles.id }).from(roles).where(eq(roles.name, roleName));
+  if (user && role) await db.insert(userRoles).values({ userId: user.id, roleId: role.id }).onConflictDoNothing();
+}
+
+await seedUser("admin", "admin123", "admin");
+// Bendahara: approve berita acara keuangan
+await seedUser("bendahara", "bendahara123", "bendahara");
 
 // Seed bpmj
 await db.insert(bpmj).values([
@@ -49,8 +54,8 @@ await db.insert(pelsus).values([
   { name: "Pnt. Rebecca Christy Adolfiane Mantiri", position: "Penatua", pelsus: "bipra", pelayanan: "ASM" },
 ]).onConflictDoNothing();
 
-// Seed news
-await db.insert(news).values([
+// Seed warta
+await db.insert(warta).values([
   {
     title: "Pendaftaran Katekisasi Perdana 2026",
     slug: "pendaftaran-katekisasi-perdana-2026",
@@ -126,6 +131,74 @@ await db.insert(jemaat).values([
   },
 ]).onConflictDoNothing();
 
+await db.insert(bpmjPosition).values([
+  {
+    name: "Ketua BPMJ",
+  },
+  {
+    name: "Wakil Ketua BPMJ",
+  },
+  {
+    name: "Sekretaris BPMJ",
+  },
+  {
+    name: "Wakil Sekretaris BPMJ",
+  },
+  {
+    name: "Bendahara BPMJ",
+  },
+  {
+    name: "Wakil Bendahara BPMJ",
+  },
+  {
+    name: "Anggota BPMJ",
+  },
+]).onConflictDoNothing();
+
+await db.insert(pelsusPosition).values([
+  {
+    name: "Pendeta Ketua",
+  },
+  {
+    name: "Pendeta Pelayan",
+  },
+  {
+    name: "Penatua",
+  },
+  {
+    name: "Diaken",
+  },
+]).onConflictDoNothing();
+
+// Seed master pemasukan lainnya (berita acara keuangan)
+await db.insert(masterPemasukanLain).values(
+  [
+    "Sampul Perpuluhan",
+    "Sampul HUT Pribadi/Pernikahan",
+    "Sampul Perjamuan Kudus",
+    "Sampul Natal",
+    "Sampul Akhir Tahun",
+    "Sampul Tahun Baru",
+    "Sampul Paskah",
+    "Sampul Syukur",
+    "Sampul Lainnya",
+    "Persembahan Ibadah Kolom",
+    "Persembahan Ibadah BIPRA",
+  ].map((name, i) => ({ name, displayOrder: i + 1 }))
+).onConflictDoNothing();
+
+// Seed master pengeluaran (petugas ibadah)
+await db.insert(masterPengeluaran).values([
+  { name: "Khadim", isRequired: true, isMultiple: false, displayOrder: 1 },
+  { name: "Pemusik", isRequired: true, isMultiple: true, displayOrder: 2 },
+  { name: "Kantoria", isRequired: true, isMultiple: true, displayOrder: 3 },
+  { name: "Multimedia", isRequired: true, isMultiple: false, displayOrder: 4 },
+  { name: "Kostor", isRequired: true, isMultiple: false, displayOrder: 5 },
+  { name: "Keamanan", isRequired: true, isMultiple: false, displayOrder: 6 },
+  { name: "Pembantu Admin", isRequired: true, isMultiple: false, displayOrder: 7 },
+]).onConflictDoNothing();
+
 console.log("Seeding completed!");
 console.log("Admin credentials: username=admin, password=admin123");
+console.log("Bendahara credentials: username=bendahara, password=bendahara123");
 process.exit(0);
