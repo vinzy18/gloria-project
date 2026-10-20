@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { organizationApi, type Bpmj, type Pelsus } from "../lib/api";
+import { organizationApi, type Bpmj } from "../lib/api";
 import { Users } from "lucide-react";
 
 function MemberCard({ name, position, photoUrl, subtitle }: {
   name: string;
-  position: string;
+  position: string | null;
   photoUrl: string | null;
   subtitle?: string | null;
 }) {
@@ -38,23 +38,11 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
-function groupPelsusByCategory(members: Pelsus[]) {
-  const groups: Record<string, Pelsus[]> = {};
-  for (const m of members) {
-    const key = m.pelsus ?? "Lainnya";
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(m);
-  }
-  return groups;
-}
-
 export default function Organization() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["organization"],
     queryFn: () => organizationApi.list().then((r) => r.data),
   });
-
-  const pelsusGroups = data ? groupPelsusByCategory(data.pelsus) : {};
 
   return (
     <>
@@ -87,7 +75,7 @@ export default function Organization() {
                   <SectionHeader title="Badan Pekerja Majelis Jemaat (BPMJ)" />
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                     {data.bpmj.map((m: Bpmj) => (
-                      <MemberCard key={m.id} name={m.name} position={m.position} photoUrl={m.photoUrl} />
+                      <MemberCard key={m.id} name={m.name} position={m.positionName} photoUrl={m.photoUrl} />
                     ))}
                   </div>
                 </div>
@@ -102,7 +90,7 @@ export default function Organization() {
                       {data.pelsus
                         .filter((m) => m.pelayanan === "Pendeta")
                         .map((m) => (
-                          <MemberCard key={m.id} name={m.name} position={m.position} photoUrl={m.photoUrl} subtitle={m.pelayanan} />
+                          <MemberCard key={m.id} name={m.name} position={m.positionName} photoUrl={m.photoUrl} subtitle={m.pelayanan} />
                         ))}
                     </div>
                   </div>
@@ -118,7 +106,7 @@ export default function Organization() {
                       {data.pelsus
                         .filter((m) => m.pelsus === "kolom")
                         .map((m) => (
-                          <MemberCard key={m.id} name={m.name} position={m.position} photoUrl={m.photoUrl} subtitle={m.pelayanan} />
+                          <MemberCard key={m.id} name={m.name} position={m.positionName} photoUrl={m.photoUrl} subtitle={m.pelayanan} />
                         ))}
                     </div>
                   </div>
@@ -133,7 +121,7 @@ export default function Organization() {
                       {data.pelsus
                         .filter((m) => m.pelsus === "bipra")
                         .map((m) => (
-                          <MemberCard key={m.id} name={m.name} position={m.position} photoUrl={m.photoUrl} subtitle={m.pelayanan} />
+                          <MemberCard key={m.id} name={m.name} position={m.positionName} photoUrl={m.photoUrl} subtitle={m.pelayanan} />
                         ))}
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-// Proxy semua request /api/* ke backend di Render
+// Proxy semua request /api/* ke backend (Vercel), alamatnya dari env BACKEND_URL
 export async function onRequest(context: {
   request: Request;
   env: { BACKEND_URL: string };

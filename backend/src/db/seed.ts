@@ -17,42 +17,72 @@ await seedUser("admin", "admin123", "admin");
 // Bendahara: approve berita acara keuangan
 await seedUser("bendahara", "bendahara123", "bendahara");
 
-// Seed bpmj
-await db.insert(bpmj).values([
-  { name: "Pdt. Dr. Cherly Lora Nirwana Naray M.Th", position: "Ketua Jemaat", displayOrder: 1 },
-  { name: "Pnt. Ir Jelfina Costansje Alouw, M.Sc, PhD", position: "Wakil Ketua Jemaat", displayOrder: 2 },
-  { name: "Pnt. Indah Jelita Sondakh, S.Th", position: "Sekretaris Jemaat", displayOrder: 3 },
-  { name: "Pnt. dr George Arthur Mantiri MLM SpPK(K)", position: "Wakil Sekretaris Jemaat", displayOrder: 4 },
-  { name: "Dkn. Beatrix V Kolanus", position: "Bendahara", displayOrder: 5 },
-  { name: "Dkn. Jilly Stephanie Tuturoong, S.Kom", position: "Wakil Bendahara", displayOrder: 6 },
-  { name: "Pnt. Novi Dalos", position: "Anggota", displayOrder: 7 },
-]).onConflictDoNothing();
+// Tabel jabatan tidak punya unique constraint, jadi cek manual supaya seed aman dijalankan ulang
+async function seedPositions(table: typeof bpmjPosition | typeof pelsusPosition, names: string[]) {
+  const ids = new Map<string, number>();
+  for (const name of names) {
+    let [row] = await db.select({ id: table.id }).from(table).where(eq(table.name, name)).limit(1);
+    if (!row) [row] = await db.insert(table).values({ name }).returning({ id: table.id });
+    ids.set(name, row.id);
+  }
+  return ids;
+}
 
-// Seed pelsus
-await db.insert(pelsus).values([
-  { name: "Pdt. Dr. Cherly Lora Nirwana Naray M.Th", position: "Pendeta Ketua", pelayanan: "Pendeta" },
-  { name: "Pdt Regina Jessica Gabriela Sumlang, S.Th", position: "Pendeta Pelayan", pelayanan: "Pendeta" },
-  { name: "Pnt. dr George Arthur Mantiri MLM SpPK(K)", position: "Penatua", pelsus: "kolom", pelayanan: "Kolom 1" },
-  { name: "Dkn. Marsha Rilya Rondo, SE", position: "Diaken", pelsus: "kolom", pelayanan: "Kolom 1" },
-  { name: "Pnt. Tommy Efraim Nandito Lambuaso, SH", position: "Penatua", pelsus: "kolom", pelayanan: "Kolom 2" },
-  { name: "Dkn. Beatrix V Kolanus", position: "Diaken", pelsus: "kolom", pelayanan: "Kolom 2" },
-  { name: "Pnt. Jeanne Malingkas", position: "Penatua", pelsus: "kolom", pelayanan: "Kolom 3" },
-  { name: "Dkn. Anita Porawouw", position: "Diaken", pelsus: "kolom", pelayanan: "Kolom 3" },
-  { name: "Pnt. Harsen Roy Tampomuri, S.IP., M.A", position: "Penatua", pelsus: "kolom", pelayanan: "Kolom 4" },
-  { name: "Pnt. Dedi Leonard Tarandung", position: "Penatua", pelsus: "kolom", pelayanan: "Kolom 5" },
-  { name: "Dkn. Meyrcilia Angelina Jacobs, SE", position: "Diaken", pelsus: "kolom", pelayanan: "Kolom 5" },
-  { name: "Pnt. Novi Dalos", position: "Penatua", pelsus: "kolom", pelayanan: "Kolom 6" },
-  { name: "Dkn. Fandy Maurets Endey", position: "Diaken", pelsus: "kolom", pelayanan: "Kolom 6" },
-  { name: "Pnt. Zefanya Yosua Jocom", position: "Penatua", pelsus: "kolom", pelayanan: "Kolom 7" },
-  { name: "Dkn. Meidy Wawoh", position: "Diaken", pelsus: "kolom", pelayanan: "Kolom 7" },
-  { name: "Pnt. Franiriette Hosrate Hosang", position: "Penatua", pelsus: "kolom", pelayanan: "Kolom 8" },
-  { name: "Dkn. Jilly Stephanie Tuturoong, S.Kom", position: "Diaken", pelsus: "kolom", pelayanan: "Kolom 8" },
-  { name: "Pnt. Daniel Andria Bonafides Sihombing", position: "Penatua", pelsus: "bipra", pelayanan: "PKB" },
-  { name: "Pnt. Ir Jelfina Costansje Alouw, M.Sc, PhD", position: "Penatua", pelsus: "bipra", pelayanan: "WKI" },
-  { name: "Pnt. Indah Jelita Sondakh, S.Th", position: "Penatua", pelsus: "bipra", pelayanan: "Pemuda" },
-  { name: "Pnt. Kevinsy Johsua Monding, S.T", position: "Penatua", pelsus: "bipra", pelayanan: "Remaja" },
-  { name: "Pnt. Rebecca Christy Adolfiane Mantiri", position: "Penatua", pelsus: "bipra", pelayanan: "ASM" },
-]).onConflictDoNothing();
+const bpmjPos = await seedPositions(bpmjPosition, [
+  "Ketua BPMJ",
+  "Wakil Ketua BPMJ",
+  "Sekretaris BPMJ",
+  "Wakil Sekretaris BPMJ",
+  "Bendahara BPMJ",
+  "Wakil Bendahara BPMJ",
+  "Anggota BPMJ",
+]);
+const pelsusPos = await seedPositions(pelsusPosition, ["Pendeta Ketua", "Pendeta Pelayan", "Penatua", "Diaken"]);
+
+// Seed bpmj (hanya kalau tabel masih kosong, karena tidak ada unique constraint)
+if ((await db.select({ id: bpmj.id }).from(bpmj).limit(1)).length === 0) {
+  await db.insert(bpmj).values([
+    { name: "Pdt. Dr. Cherly Lora Nirwana Naray M.Th", positionId: bpmjPos.get("Ketua BPMJ"), displayOrder: 1 },
+    { name: "Pnt. Ir Jelfina Costansje Alouw, M.Sc, PhD", positionId: bpmjPos.get("Wakil Ketua BPMJ"), displayOrder: 2 },
+    { name: "Pnt. Indah Jelita Sondakh, S.Th", positionId: bpmjPos.get("Sekretaris BPMJ"), displayOrder: 3 },
+    { name: "Pnt. dr George Arthur Mantiri MLM SpPK(K)", positionId: bpmjPos.get("Wakil Sekretaris BPMJ"), displayOrder: 4 },
+    { name: "Dkn. Beatrix V Kolanus", positionId: bpmjPos.get("Bendahara BPMJ"), displayOrder: 5 },
+    { name: "Dkn. Jilly Stephanie Tuturoong, S.Kom", positionId: bpmjPos.get("Wakil Bendahara BPMJ"), displayOrder: 6 },
+    { name: "Pnt. Novi Dalos", positionId: bpmjPos.get("Anggota BPMJ"), displayOrder: 7 },
+  ]);
+}
+
+// Seed pelsus (hanya kalau tabel masih kosong)
+if ((await db.select({ id: pelsus.id }).from(pelsus).limit(1)).length === 0) {
+  const pendetaKetua = pelsusPos.get("Pendeta Ketua");
+  const pendetaPelayan = pelsusPos.get("Pendeta Pelayan");
+  const penatua = pelsusPos.get("Penatua");
+  const diaken = pelsusPos.get("Diaken");
+  await db.insert(pelsus).values([
+    { name: "Pdt. Dr. Cherly Lora Nirwana Naray M.Th", positionId: pendetaKetua, pelayanan: "Pendeta" },
+    { name: "Pdt Regina Jessica Gabriela Sumlang, S.Th", positionId: pendetaPelayan, pelayanan: "Pendeta" },
+    { name: "Pnt. dr George Arthur Mantiri MLM SpPK(K)", positionId: penatua, pelsus: "kolom", pelayanan: "Kolom 1" },
+    { name: "Dkn. Marsha Rilya Rondo, SE", positionId: diaken, pelsus: "kolom", pelayanan: "Kolom 1" },
+    { name: "Pnt. Tommy Efraim Nandito Lambuaso, SH", positionId: penatua, pelsus: "kolom", pelayanan: "Kolom 2" },
+    { name: "Dkn. Beatrix V Kolanus", positionId: diaken, pelsus: "kolom", pelayanan: "Kolom 2" },
+    { name: "Pnt. Jeanne Malingkas", positionId: penatua, pelsus: "kolom", pelayanan: "Kolom 3" },
+    { name: "Dkn. Anita Porawouw", positionId: diaken, pelsus: "kolom", pelayanan: "Kolom 3" },
+    { name: "Pnt. Harsen Roy Tampomuri, S.IP., M.A", positionId: penatua, pelsus: "kolom", pelayanan: "Kolom 4" },
+    { name: "Pnt. Dedi Leonard Tarandung", positionId: penatua, pelsus: "kolom", pelayanan: "Kolom 5" },
+    { name: "Dkn. Meyrcilia Angelina Jacobs, SE", positionId: diaken, pelsus: "kolom", pelayanan: "Kolom 5" },
+    { name: "Pnt. Novi Dalos", positionId: penatua, pelsus: "kolom", pelayanan: "Kolom 6" },
+    { name: "Dkn. Fandy Maurets Endey", positionId: diaken, pelsus: "kolom", pelayanan: "Kolom 6" },
+    { name: "Pnt. Zefanya Yosua Jocom", positionId: penatua, pelsus: "kolom", pelayanan: "Kolom 7" },
+    { name: "Dkn. Meidy Wawoh", positionId: diaken, pelsus: "kolom", pelayanan: "Kolom 7" },
+    { name: "Pnt. Franiriette Hosrate Hosang", positionId: penatua, pelsus: "kolom", pelayanan: "Kolom 8" },
+    { name: "Dkn. Jilly Stephanie Tuturoong, S.Kom", positionId: diaken, pelsus: "kolom", pelayanan: "Kolom 8" },
+    { name: "Pnt. Daniel Andria Bonafides Sihombing", positionId: penatua, pelsus: "bipra", pelayanan: "PKB" },
+    { name: "Pnt. Ir Jelfina Costansje Alouw, M.Sc, PhD", positionId: penatua, pelsus: "bipra", pelayanan: "WKI" },
+    { name: "Pnt. Indah Jelita Sondakh, S.Th", positionId: penatua, pelsus: "bipra", pelayanan: "Pemuda" },
+    { name: "Pnt. Kevinsy Johsua Monding, S.T", positionId: penatua, pelsus: "bipra", pelayanan: "Remaja" },
+    { name: "Pnt. Rebecca Christy Adolfiane Mantiri", positionId: penatua, pelsus: "bipra", pelayanan: "ASM" },
+  ]);
+}
 
 // Seed warta
 await db.insert(warta).values([
@@ -128,45 +158,6 @@ await db.insert(jemaat).values([
     bipra: "Pemuda",
     isActive: true,
     joinDate: "2005-06-10",
-  },
-]).onConflictDoNothing();
-
-await db.insert(bpmjPosition).values([
-  {
-    name: "Ketua BPMJ",
-  },
-  {
-    name: "Wakil Ketua BPMJ",
-  },
-  {
-    name: "Sekretaris BPMJ",
-  },
-  {
-    name: "Wakil Sekretaris BPMJ",
-  },
-  {
-    name: "Bendahara BPMJ",
-  },
-  {
-    name: "Wakil Bendahara BPMJ",
-  },
-  {
-    name: "Anggota BPMJ",
-  },
-]).onConflictDoNothing();
-
-await db.insert(pelsusPosition).values([
-  {
-    name: "Pendeta Ketua",
-  },
-  {
-    name: "Pendeta Pelayan",
-  },
-  {
-    name: "Penatua",
-  },
-  {
-    name: "Diaken",
   },
 ]).onConflictDoNothing();
 
