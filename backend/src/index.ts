@@ -40,10 +40,9 @@ app.onError((err, c) => {
   return c.json({ error: "Internal server error" }, 500);
 });
 
-const port = parseInt(process.env.PORT ?? "3000");
-console.log(`Server berjalan di http://localhost:${port}`);
+// Vercel memakai default export ini sebagai handler; Bun otomatis serve di port PORT (default 3000)
+if (!process.env.VERCEL) {
+  console.log(`Server berjalan di http://localhost:${process.env.PORT ?? 3000}`);
+}
 
-export default {
-  port,
-  fetch: app.fetch,
-};
+export default app;

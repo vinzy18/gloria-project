@@ -4,6 +4,7 @@ import * as schema from "./schema";
 
 const connectionString = process.env.DATABASE_URL ?? "postgresql://gloria:gloria123@localhost:5432/gloria_db";
 
-const client = postgres(connectionString);
+// Tutup koneksi idle supaya tidak tersisa koneksi basi saat function Vercel / Neon tidur
+const client = postgres(connectionString, { idle_timeout: 20 });
 
 export const db = drizzle(client, { schema });
