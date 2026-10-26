@@ -13,6 +13,6 @@
   },
   "vars": {
     // Ganti dengan URL backend Vercel kamu (tanpa "/" di akhir)
-    "BACKEND_URL": "https://gloria-backend.vercel.app"
+    "BACKEND_URL": "https://gloria-project-qo62p1j9g-vinzy18s-projects.vercel.app/"
   }
 }
