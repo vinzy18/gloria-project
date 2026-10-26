@@ -18,6 +18,7 @@ node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/.cache/
+frontend/.wrangler/
 
 # ===========================
 # Backend (Bun + Hono)

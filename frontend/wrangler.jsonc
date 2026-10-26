@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gloria-jaksel",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // Route React (mis. /warta/123) di-refresh tetap dapat index.html
+    "not_found_handling": "single-page-application",
+    // Hanya /api/* yang lewat Worker; file statis langsung dilayani Cloudflare
+    "run_worker_first": ["/api/*"]
+  },
+  "vars": {
+    // Ganti dengan URL backend Vercel kamu (tanpa "/" di akhir)
+    "BACKEND_URL": "https://gloria-backend.vercel.app"
+  }
+}
