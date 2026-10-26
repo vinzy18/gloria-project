@@ -1,5 +1,5 @@
-import { db } from "./index";
-import { users, roles, userRoles, warta, events, bpmj, jemaat, pelsus, masterPelayanan, bpmjPosition, pelsusPosition, masterPemasukanLain, masterPengeluaran } from "./schema";
+import { db } from "./index.js";
+import { users, roles, userRoles, warta, events, bpmj, jemaat, pelsus, masterPelayanan, bpmjPosition, pelsusPosition, masterPemasukanLain, masterPengeluaran } from "./schema.js";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 

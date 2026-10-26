@@ -1,10 +1,10 @@
 import { createMiddleware } from "hono/factory";
 import jwt from "jsonwebtoken";
 import { asc, eq } from "drizzle-orm";
-import { db } from "../db/index";
-import { users, roles, rolePermissions, userRoles } from "../db/schema";
-import type { Permission } from "../shared/permissions";
-import { JWT_SECRET } from "../lib/env";
+import { db } from "../db/index.js";
+import { users, roles, rolePermissions, userRoles } from "../db/schema.js";
+import type { Permission } from "../shared/permissions.js";
+import { JWT_SECRET } from "../lib/env.js";
 
 // Role sengaja tidak disimpan di token; selalu dibaca dari DB tiap request
 export type JwtPayload = {

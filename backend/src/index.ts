@@ -1,13 +1,13 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import authRoutes from "./routes/auth";
-import jemaatRoutes from "./routes/jemaat";
-import wartaRoutes from "./routes/warta";
-import eventsRoutes from "./routes/events";
-import organizationRoutes from "./routes/organization";
-import beritaAcaraRoutes from "./routes/beritaAcara";
-import rbacRoutes from "./routes/rbac";
+import authRoutes from "./routes/auth.js";
+import jemaatRoutes from "./routes/jemaat.js";
+import wartaRoutes from "./routes/warta.js";
+import eventsRoutes from "./routes/events.js";
+import organizationRoutes from "./routes/organization.js";
+import beritaAcaraRoutes from "./routes/beritaAcara.js";
+import rbacRoutes from "./routes/rbac.js";
 
 const app = new Hono();
 

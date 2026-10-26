@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { eq, ilike, or, and, sql, asc, desc, inArray } from "drizzle-orm";
-import { db } from "../db/index";
+import { db } from "../db/index.js";
 import {
   users,
   masterPemasukanLain,
@@ -10,9 +10,9 @@ import {
   beritaAcaraKeuangan,
   beritaAcaraPemasukanLain,
   beritaAcaraPengeluaran,
-} from "../db/schema";
-import { authMiddleware, requirePermission } from "../middleware/auth";
-import { terbilang } from "../lib/terbilang";
+} from "../db/schema.js";
+import { authMiddleware, requirePermission } from "../middleware/auth.js";
+import { terbilang } from "../lib/terbilang.js";
 
 const router = new Hono();
 

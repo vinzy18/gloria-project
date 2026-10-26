@@ -4,10 +4,10 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { db } from "../db/index";
-import { users } from "../db/schema";
-import { JWT_SECRET } from "../lib/env";
-import { authMiddleware, getPermissionsForRoles, getUserRoles } from "../middleware/auth";
+import { db } from "../db/index.js";
+import { users } from "../db/schema.js";
+import { JWT_SECRET } from "../lib/env.js";
+import { authMiddleware, getPermissionsForRoles, getUserRoles } from "../middleware/auth.js";
 
 const router = new Hono();
 

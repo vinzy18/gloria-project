@@ -2,9 +2,9 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { eq, desc, and, ilike, sql } from "drizzle-orm";
-import { db } from "../db/index";
-import { warta } from "../db/schema";
-import { authMiddleware, requirePermission } from "../middleware/auth";
+import { db } from "../db/index.js";
+import { warta } from "../db/schema.js";
+import { authMiddleware, requirePermission } from "../middleware/auth.js";
 
 const router = new Hono();
 

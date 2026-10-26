@@ -1,5 +1,5 @@
 import { migrate } from "drizzle-orm/postgres-js/migrator";
-import { db } from "./index";
+import { db } from "./index.js";
 
 console.log("Running migrations...");
 await migrate(db, { migrationsFolder: "./drizzle" });

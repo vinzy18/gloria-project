@@ -3,10 +3,10 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { and, asc, eq, exists, ilike, inArray, or, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { db } from "../db/index";
-import { users, roles, rolePermissions, userRoles } from "../db/schema";
-import { authMiddleware, requirePermission, getPermissionsForRoles, invalidatePermissionCache } from "../middleware/auth";
-import { isValidPermission, type Permission } from "../shared/permissions";
+import { db } from "../db/index.js";
+import { users, roles, rolePermissions, userRoles } from "../db/schema.js";
+import { authMiddleware, requirePermission, getPermissionsForRoles, invalidatePermissionCache } from "../middleware/auth.js";
+import { isValidPermission, type Permission } from "../shared/permissions.js";
 
 const router = new Hono();
 
