@@ -13,12 +13,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirect to login on 401
+// Redirect to login on 401 — hanya di halaman admin, pengunjung halaman publik tidak ikut dilempar
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const isLoginRequest = error.config?.url?.includes("/auth/login");
-    if (error.response?.status === 401 && !isLoginRequest) {
+    const isAdminPage = window.location.pathname.startsWith("/admin");
+    if (error.response?.status === 401 && !isLoginRequest && isAdminPage) {
       localStorage.removeItem("gloria_token");
       localStorage.removeItem("gloria_user");
       window.location.href = "/admin/login";
